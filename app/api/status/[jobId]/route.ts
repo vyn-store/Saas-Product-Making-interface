@@ -7,8 +7,9 @@ export async function GET(
   const { jobId } = await params
 
   try {
-    const n8nApiKey = process.env.N8N_API_KEY
-    const n8nBaseUrl = process.env.N8N_BASE_URL
+    // Remove quotes and trim whitespace from environment variables
+    const n8nApiKey = process.env.N8N_API_KEY?.replace(/^["']|["']$/g, '').trim()
+    const n8nBaseUrl = process.env.N8N_BASE_URL?.replace(/^["']|["']$/g, '').trim()
 
     console.log('[Status API] Checking status for jobId:', jobId)
     console.log('[Status API] N8N_API_KEY:', n8nApiKey ? 'SET (length: ' + n8nApiKey.length + ')' : 'NOT SET')

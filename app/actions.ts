@@ -120,11 +120,19 @@ export async function generateMediaForProduct(product: ProductData): Promise<Med
     console.log('[generateMediaForProduct] Response status:', response.status)
 
     if (!response.ok) {
-      console.error('[generateMediaForProduct] HTTP error:', response.status)
+      const errorText = await response.text()
+      console.error('[generateMediaForProduct] HTTP error:', response.status, errorText.substring(0, 200))
+
+      // Check if it's an HTML error page
+      const isHTML = errorText.trim().startsWith('<!DOCTYPE') || errorText.trim().startsWith('<!doctype')
+      const errorMessage = isHTML
+        ? `Webhook error (${response.status}): Unable to reach n8n workflow. Please check webhook URL.`
+        : `HTTP ${response.status}: ${errorText.substring(0, 100)}`
+
       return {
         success: false,
         status: 'failed',
-        error: `HTTP error! status: ${response.status}`
+        error: errorMessage
       }
     }
 
@@ -151,53 +159,5 @@ export async function generateMediaForProduct(product: ProductData): Promise<Med
   }
 }
 
-// Poll for media generation status
-export async function checkMediaGenerationStatus(jobId: string): Promise<MediaGenerationJobResponse & { progress?: number }> {
-  try {
-    // For production, use the current domain
-    const baseUrl = typeof window !== 'undefined'
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : 'http://localhost:3000'
-
-    console.log('[checkStatus] Base URL:', baseUrl)
-    console.log('[checkStatus] Fetching status for jobId:', jobId)
-
-    const response = await fetch(`${baseUrl}/api/status/${jobId}`, {
-      cache: 'no-store',
-    })
-
-    console.log('[checkStatus] Response status:', response.status)
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('[checkStatus] HTTP error:', response.status, errorText.substring(0, 200))
-      return {
-        success: false,
-        status: 'failed',
-        error: `HTTP ${response.status}: ${errorText.substring(0, 100)}`
-      }
-    }
-
-    const data = await response.json()
-    console.log('[checkStatus] Response data:', data)
-
-    return {
-      success: data.success,
-      status: data.status,
-      message: data.message,
-      data: data.data,
-      error: data.error,
-      progress: data.progress
-    }
-  } catch (error) {
-    console.error('[checkStatus] Catch block error:', error)
-    console.error('[checkStatus] Error details:', error instanceof Error ? error.message : String(error))
-    return {
-      success: false,
-      status: 'failed',
-      error: error instanceof Error ? error.message : 'Failed to check status'
-    }
-  }
-}
+// Note: Status checking has been removed - users should check n8n dashboard directly
+// The generation workflow runs asynchronously and results are available in n8n
