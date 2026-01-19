@@ -154,21 +154,34 @@ export async function generateMediaForProduct(product: ProductData): Promise<Med
 // Poll for media generation status
 export async function checkMediaGenerationStatus(jobId: string): Promise<MediaGenerationJobResponse & { progress?: number }> {
   try {
-    // Build absolute URL for server-side fetch
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    // For production, use the current domain
+    const baseUrl = typeof window !== 'undefined'
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'http://localhost:3000'
+
+    console.log('[checkStatus] Base URL:', baseUrl)
+    console.log('[checkStatus] Fetching status for jobId:', jobId)
+
     const response = await fetch(`${baseUrl}/api/status/${jobId}`, {
       cache: 'no-store',
     })
 
+    console.log('[checkStatus] Response status:', response.status)
+
     if (!response.ok) {
+      const errorText = await response.text()
+      console.error('[checkStatus] HTTP error:', response.status, errorText.substring(0, 200))
       return {
         success: false,
         status: 'failed',
-        error: `HTTP error! status: ${response.status}`
+        error: `HTTP ${response.status}: ${errorText.substring(0, 100)}`
       }
     }
 
     const data = await response.json()
+    console.log('[checkStatus] Response data:', data)
 
     return {
       success: data.success,
@@ -179,7 +192,8 @@ export async function checkMediaGenerationStatus(jobId: string): Promise<MediaGe
       progress: data.progress
     }
   } catch (error) {
-    console.error('Error checking status:', error)
+    console.error('[checkStatus] Catch block error:', error)
+    console.error('[checkStatus] Error details:', error instanceof Error ? error.message : String(error))
     return {
       success: false,
       status: 'failed',
