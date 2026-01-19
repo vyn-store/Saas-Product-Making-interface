@@ -81,7 +81,9 @@ export default function GenerationPage() {
 
     const pollStatus = async () => {
       try {
+        console.log('[GenerationPage] Polling status for jobId:', jobId)
         const result = await checkMediaGenerationStatus(jobId)
+        console.log('[GenerationPage] Poll result:', result)
 
         if (result.status === 'completed' && result.data) {
           setStatus('completed')
@@ -92,13 +94,19 @@ export default function GenerationPage() {
           setSteps(steps.map(s => ({ ...s, status: 'completed' })))
           clearInterval(pollInterval)
         } else if (result.status === 'failed') {
+          console.error('[GenerationPage] Status check returned failed:', result.error)
           setStatus('failed')
           setError(result.error || 'Media generation failed')
           clearInterval(pollInterval)
+        } else {
+          console.log('[GenerationPage] Still processing, progress:', result.progress || 0)
         }
         // If still processing, keep fake progress running
       } catch (err) {
-        console.error('Error polling status:', err)
+        console.error('[GenerationPage] Error polling status:', err)
+        console.error('[GenerationPage] Error details:', err instanceof Error ? err.message : String(err))
+        // Don't fail immediately - the job might still be processing
+        // Only fail if we've been polling for a long time (handled by fake progress)
       }
     }
 
