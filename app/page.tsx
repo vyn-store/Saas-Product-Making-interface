@@ -13,6 +13,9 @@ export default function Home() {
   const [mediaGenerating, setMediaGenerating] = useState(false)
   const [generatedMedia, setGeneratedMedia] = useState<MediaGenerationData | null>(null)
 
+  // Version identifier for debugging - v2.0.1
+  console.log('[Home Component] Version: 2.0.1 - API Route Implementation')
+
   const handleFetchProduct = async () => {
     setLoading(true)
     setError(null)
@@ -30,46 +33,63 @@ export default function Home() {
   }
 
   const handleKeepProduct = async () => {
-    if (!product) return
+    if (!product) {
+      console.error('[handleKeepProduct] No product available')
+      return
+    }
 
-    console.log('[handleKeepProduct] Starting with product:', product.name)
+    console.log('[handleKeepProduct] ========== STARTING ==========')
+    console.log('[handleKeepProduct] Product:', product.name)
+    console.log('[handleKeepProduct] Product ID:', product.id)
+
     setMediaGenerating(true)
     setError(null)
 
     try {
-      console.log('[handleKeepProduct] Making API call to /api/generate...')
-      console.log('[handleKeepProduct] Product data:', product)
+      const apiUrl = '/api/generate'
+      console.log('[handleKeepProduct] API URL:', apiUrl)
+      console.log('[handleKeepProduct] Sending request NOW...')
 
-      const response = await fetch('/api/generate', {
+      const requestBody = { product }
+      console.log('[handleKeepProduct] Request body:', JSON.stringify(requestBody).substring(0, 200))
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ product }),
+        body: JSON.stringify(requestBody),
+        cache: 'no-store',
       })
 
+      console.log('[handleKeepProduct] ========== RESPONSE RECEIVED ==========')
       console.log('[handleKeepProduct] Response status:', response.status)
+      console.log('[handleKeepProduct] Response ok:', response.ok)
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('[handleKeepProduct] API error:', errorText)
-        throw new Error(`API request failed: ${response.status}`)
+        console.error('[handleKeepProduct] ========== API ERROR ==========')
+        console.error('[handleKeepProduct] Error response:', errorText)
+        throw new Error(`API request failed: ${response.status} - ${errorText}`)
       }
 
       const result = await response.json()
-      console.log('[handleKeepProduct] Got result:', result)
+      console.log('[handleKeepProduct] ========== SUCCESS ==========')
+      console.log('[handleKeepProduct] Result:', result)
 
       if (result.success && result.jobId) {
-        console.log('[handleKeepProduct] Success! Navigating to:', `/generation/${result.jobId}`)
-        // Navigate to generation page with jobId
+        console.log('[handleKeepProduct] Navigation target:', `/generation/${result.jobId}`)
         router.push(`/generation/${result.jobId}`)
       } else {
-        console.error('[handleKeepProduct] Failed:', result.error)
+        console.error('[handleKeepProduct] ========== FAILED ==========')
+        console.error('[handleKeepProduct] Result error:', result.error)
         setError(result.error || 'Failed to start media generation')
         setMediaGenerating(false)
       }
     } catch (error) {
-      console.error('[handleKeepProduct] Unexpected error:', error)
+      console.error('[handleKeepProduct] ========== EXCEPTION ==========')
+      console.error('[handleKeepProduct] Exception:', error)
+      console.error('[handleKeepProduct] Stack:', error instanceof Error ? error.stack : 'N/A')
       setError(error instanceof Error ? error.message : 'An unexpected error occurred')
       setMediaGenerating(false)
     }
