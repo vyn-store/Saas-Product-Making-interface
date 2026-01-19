@@ -48,10 +48,9 @@ export default function Home() {
     setError(null)
 
     try {
-      // N8N Webhook URL - Direct call to production webhook
-      // IMPORTANT: Make sure ONLY workflow LYyh2ovT6sJoxGiG is active with this path
-      // Deactivate workflow IpiUMIpqaO6GUZMJ if requests are going to wrong workflow
-      const webhookUrl = 'https://kvktrades.app.n8n.cloud/webhook/product-media-generation'
+      // N8N Webhook URL - Using TEST webhook URL since production URL not registered
+      // Test URL from webhook node: webhook-test/product-media-generation
+      const webhookUrl = 'https://kvktrades.app.n8n.cloud/webhook-test/product-media-generation'
 
       console.log('[GENERATE] Webhook URL:', webhookUrl)
       console.log('[GENERATE] Preparing request payload...')
