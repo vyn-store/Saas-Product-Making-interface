@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { fetchRandomProduct, generateMediaForProduct, type ProductData, type MediaGenerationData } from './actions'
+import { fetchRandomProduct, type ProductData, type MediaGenerationData } from './actions'
 import ProductCard from '@/components/ProductCard'
 
 export default function Home() {
@@ -37,8 +37,26 @@ export default function Home() {
     setError(null)
 
     try {
-      console.log('[handleKeepProduct] Calling generateMediaForProduct...')
-      const result = await generateMediaForProduct(product)
+      console.log('[handleKeepProduct] Making API call to /api/generate...')
+      console.log('[handleKeepProduct] Product data:', product)
+
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ product }),
+      })
+
+      console.log('[handleKeepProduct] Response status:', response.status)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('[handleKeepProduct] API error:', errorText)
+        throw new Error(`API request failed: ${response.status}`)
+      }
+
+      const result = await response.json()
       console.log('[handleKeepProduct] Got result:', result)
 
       if (result.success && result.jobId) {
