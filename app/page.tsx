@@ -32,16 +32,27 @@ export default function Home() {
   const handleKeepProduct = async () => {
     if (!product) return
 
+    console.log('[handleKeepProduct] Starting with product:', product.name)
     setMediaGenerating(true)
     setError(null)
 
-    const result = await generateMediaForProduct(product)
+    try {
+      console.log('[handleKeepProduct] Calling generateMediaForProduct...')
+      const result = await generateMediaForProduct(product)
+      console.log('[handleKeepProduct] Got result:', result)
 
-    if (result.success && result.jobId) {
-      // Navigate to generation page with jobId
-      router.push(`/generation/${result.jobId}`)
-    } else {
-      setError(result.error || 'Failed to start media generation')
+      if (result.success && result.jobId) {
+        console.log('[handleKeepProduct] Success! Navigating to:', `/generation/${result.jobId}`)
+        // Navigate to generation page with jobId
+        router.push(`/generation/${result.jobId}`)
+      } else {
+        console.error('[handleKeepProduct] Failed:', result.error)
+        setError(result.error || 'Failed to start media generation')
+        setMediaGenerating(false)
+      }
+    } catch (error) {
+      console.error('[handleKeepProduct] Unexpected error:', error)
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred')
       setMediaGenerating(false)
     }
   }

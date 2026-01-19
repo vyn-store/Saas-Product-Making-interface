@@ -96,7 +96,9 @@ export async function generateMediaForProduct(product: ProductData): Promise<Med
 
     console.log('[generateMediaForProduct] Starting...')
     console.log('[generateMediaForProduct] Webhook URL:', webhookUrl ? 'SET' : 'NOT SET')
+    console.log('[generateMediaForProduct] Full Webhook URL:', webhookUrl)
     console.log('[generateMediaForProduct] Product:', product.name)
+    console.log('[generateMediaForProduct] Product data:', JSON.stringify(product, null, 2))
 
     if (!webhookUrl) {
       console.error('[generateMediaForProduct] Webhook URL not configured')
