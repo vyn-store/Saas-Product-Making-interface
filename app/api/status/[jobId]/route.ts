@@ -10,7 +10,12 @@ export async function GET(
     const n8nApiKey = process.env.N8N_API_KEY
     const n8nBaseUrl = process.env.N8N_BASE_URL
 
+    console.log('[Status API] Checking status for jobId:', jobId)
+    console.log('[Status API] N8N_API_KEY:', n8nApiKey ? 'SET (length: ' + n8nApiKey.length + ')' : 'NOT SET')
+    console.log('[Status API] N8N_BASE_URL:', n8nBaseUrl ? n8nBaseUrl : 'NOT SET')
+
     if (!n8nApiKey || !n8nBaseUrl) {
+      console.error('[Status API] N8N credentials not configured')
       return NextResponse.json(
         { success: false, status: 'failed', error: 'N8N API not configured' },
         { status: 500 }
@@ -22,15 +27,21 @@ export async function GET(
 
     // Get recent executions
     const executionsUrl = `${n8nBaseUrl}/api/v1/executions?workflowId=${workflowId}&limit=50`
+    console.log('[Status API] Fetching executions from:', executionsUrl)
+
     const executionsResponse = await fetch(executionsUrl, {
       headers: {
         'X-N8N-API-KEY': n8nApiKey,
       },
     })
 
+    console.log('[Status API] Executions response status:', executionsResponse.status)
+
     if (!executionsResponse.ok) {
+      const errorText = await executionsResponse.text()
+      console.error('[Status API] Failed to query n8n:', executionsResponse.status, errorText.substring(0, 200))
       return NextResponse.json(
-        { success: false, status: 'failed', error: 'Failed to query n8n' },
+        { success: false, status: 'failed', error: 'Failed to query n8n: ' + executionsResponse.status },
         { status: 500 }
       )
     }
@@ -181,7 +192,10 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Error checking job status:', error)
+    console.error('[Status API] Catch block error:', error)
+    console.error('[Status API] Error type:', error instanceof Error ? 'Error' : typeof error)
+    console.error('[Status API] Error message:', error instanceof Error ? error.message : String(error))
+    console.error('[Status API] Error stack:', error instanceof Error ? error.stack : 'N/A')
     return NextResponse.json(
       {
         success: false,
