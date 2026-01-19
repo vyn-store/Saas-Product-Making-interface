@@ -40,16 +40,28 @@ export default function GenerationPage() {
 
   // Polling effect to check for results
   useEffect(() => {
+    console.log('[Generation Page] Starting polling for jobId:', jobId)
+
     const pollInterval = setInterval(async () => {
       try {
+        console.log('[Poll] Checking results...')
         const response = await fetch(`/api/results/${jobId}`)
         const data = await response.json()
 
+        console.log('[Poll] Response:', data)
+
         if (data.success && data.status === 'completed') {
+          console.log('[Poll] ✓ GENERATION COMPLETE!')
+          console.log('[Poll] Results data:', data.data)
+          console.log('[Poll] - imageUrl:', data.data?.imageUrl || 'MISSING')
+          console.log('[Poll] - videoUrl:', data.data?.videoUrl || 'MISSING')
+
           setResults(data.data)
           setIsComplete(true)
           setProgress(100)
           clearInterval(pollInterval)
+        } else {
+          console.log('[Poll] Still processing... (status:', data.status, ')')
         }
       } catch (error) {
         console.error('[Results Poll] Error:', error)
