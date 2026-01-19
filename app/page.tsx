@@ -13,8 +13,8 @@ export default function Home() {
   const [mediaGenerating, setMediaGenerating] = useState(false)
   const [generatedMedia, setGeneratedMedia] = useState<MediaGenerationData | null>(null)
 
-  // Version identifier for debugging - v2.0.1
-  console.log('[Home Component] Version: 2.0.1 - API Route Implementation')
+  // Version identifier - v3.0.0 - Direct webhook call
+  console.log('[Home Component] Version: 3.0.0 - Direct N8N Webhook Call')
 
   const handleFetchProduct = async () => {
     setLoading(true)
@@ -34,63 +34,81 @@ export default function Home() {
 
   const handleKeepProduct = async () => {
     if (!product) {
-      console.error('[handleKeepProduct] No product available')
+      console.error('[GENERATE] No product available')
       return
     }
 
-    console.log('[handleKeepProduct] ========== STARTING ==========')
-    console.log('[handleKeepProduct] Product:', product.name)
-    console.log('[handleKeepProduct] Product ID:', product.id)
+    console.log('='.repeat(60))
+    console.log('[GENERATE] STARTING MEDIA GENERATION')
+    console.log('[GENERATE] Product:', product.name)
+    console.log('[GENERATE] Product ID:', product.id)
+    console.log('='.repeat(60))
 
     setMediaGenerating(true)
     setError(null)
 
     try {
-      const apiUrl = '/api/generate'
-      console.log('[handleKeepProduct] API URL:', apiUrl)
-      console.log('[handleKeepProduct] Sending request NOW...')
+      // N8N Webhook URL - direct call from browser
+      const webhookUrl = 'https://kvktrades.app.n8n.cloud/webhook/product-media-generation'
 
-      const requestBody = { product }
-      console.log('[handleKeepProduct] Request body:', JSON.stringify(requestBody).substring(0, 200))
+      console.log('[GENERATE] Webhook URL:', webhookUrl)
+      console.log('[GENERATE] Preparing request payload...')
 
-      const response = await fetch(apiUrl, {
+      const payload = { product }
+      console.log('[GENERATE] Payload:', JSON.stringify(payload).substring(0, 300))
+
+      console.log('[GENERATE] Sending fetch request to N8N...')
+      const startTime = Date.now()
+
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        body: JSON.stringify(requestBody),
-        cache: 'no-store',
+        body: JSON.stringify(payload),
+        mode: 'cors',
       })
 
-      console.log('[handleKeepProduct] ========== RESPONSE RECEIVED ==========')
-      console.log('[handleKeepProduct] Response status:', response.status)
-      console.log('[handleKeepProduct] Response ok:', response.ok)
+      const endTime = Date.now()
+      console.log('[GENERATE] Response received in', endTime - startTime, 'ms')
+      console.log('[GENERATE] Status:', response.status, response.statusText)
+      console.log('[GENERATE] Headers:', Object.fromEntries([...response.headers.entries()]))
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('[handleKeepProduct] ========== API ERROR ==========')
-        console.error('[handleKeepProduct] Error response:', errorText)
-        throw new Error(`API request failed: ${response.status} - ${errorText}`)
+        console.error('[GENERATE] ERROR - Bad response:', errorText.substring(0, 500))
+        throw new Error(`Webhook returned ${response.status}: ${errorText.substring(0, 100)}`)
       }
 
-      const result = await response.json()
-      console.log('[handleKeepProduct] ========== SUCCESS ==========')
-      console.log('[handleKeepProduct] Result:', result)
+      const responseText = await response.text()
+      console.log('[GENERATE] Raw response:', responseText)
+
+      const result = JSON.parse(responseText)
+      console.log('[GENERATE] Parsed result:', result)
 
       if (result.success && result.jobId) {
-        console.log('[handleKeepProduct] Navigation target:', `/generation/${result.jobId}`)
+        console.log('[GENERATE] ✓ SUCCESS - Job ID:', result.jobId)
+        console.log('[GENERATE] Navigating to generation page...')
         router.push(`/generation/${result.jobId}`)
       } else {
-        console.error('[handleKeepProduct] ========== FAILED ==========')
-        console.error('[handleKeepProduct] Result error:', result.error)
-        setError(result.error || 'Failed to start media generation')
+        console.error('[GENERATE] ✗ FAILED - No job ID in response')
+        console.error('[GENERATE] Result:', result)
+        setError(result.error || result.message || 'Failed to start media generation')
         setMediaGenerating(false)
       }
     } catch (error) {
-      console.error('[handleKeepProduct] ========== EXCEPTION ==========')
-      console.error('[handleKeepProduct] Exception:', error)
-      console.error('[handleKeepProduct] Stack:', error instanceof Error ? error.stack : 'N/A')
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred')
+      console.error('='.repeat(60))
+      console.error('[GENERATE] EXCEPTION CAUGHT')
+      console.error('[GENERATE] Error:', error)
+      console.error('[GENERATE] Type:', typeof error)
+      console.error('[GENERATE] Message:', error instanceof Error ? error.message : String(error))
+      if (error instanceof Error && error.stack) {
+        console.error('[GENERATE] Stack:', error.stack)
+      }
+      console.error('='.repeat(60))
+
+      setError(error instanceof Error ? error.message : 'Failed to generate media')
       setMediaGenerating(false)
     }
   }
