@@ -94,7 +94,12 @@ export async function generateMediaForProduct(product: ProductData): Promise<Med
   try {
     const webhookUrl = process.env.NEXT_PUBLIC_MEDIA_GEN_WEBHOOK_URL
 
+    console.log('[generateMediaForProduct] Starting...')
+    console.log('[generateMediaForProduct] Webhook URL:', webhookUrl ? 'SET' : 'NOT SET')
+    console.log('[generateMediaForProduct] Product:', product.name)
+
     if (!webhookUrl) {
+      console.error('[generateMediaForProduct] Webhook URL not configured')
       return {
         success: false,
         status: 'failed',
@@ -102,6 +107,7 @@ export async function generateMediaForProduct(product: ProductData): Promise<Med
       }
     }
 
+    console.log('[generateMediaForProduct] Making fetch request...')
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
@@ -111,7 +117,10 @@ export async function generateMediaForProduct(product: ProductData): Promise<Med
       cache: 'no-store',
     })
 
+    console.log('[generateMediaForProduct] Response status:', response.status)
+
     if (!response.ok) {
+      console.error('[generateMediaForProduct] HTTP error:', response.status)
       return {
         success: false,
         status: 'failed',
@@ -120,6 +129,7 @@ export async function generateMediaForProduct(product: ProductData): Promise<Med
     }
 
     const responseData = await response.json()
+    console.log('[generateMediaForProduct] Response data:', responseData)
 
     return {
       success: responseData.success,
@@ -130,7 +140,9 @@ export async function generateMediaForProduct(product: ProductData): Promise<Med
       data: responseData.data
     }
   } catch (error) {
-    console.error('Error generating media:', error)
+    console.error('[generateMediaForProduct] Catch block error:', error)
+    console.error('[generateMediaForProduct] Error type:', error instanceof Error ? 'Error' : typeof error)
+    console.error('[generateMediaForProduct] Error message:', error instanceof Error ? error.message : String(error))
     return {
       success: false,
       status: 'failed',
