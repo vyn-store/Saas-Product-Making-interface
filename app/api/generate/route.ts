@@ -31,15 +31,19 @@ export async function POST(request: NextRequest) {
     })
 
     console.log('[API /api/generate] Response status:', response.status)
+    console.log('[API /api/generate] Response headers:', Object.fromEntries(response.headers.entries()))
+
+    // Get response text first to handle parsing errors
+    const responseText = await response.text()
+    console.log('[API /api/generate] Response text (first 500 chars):', responseText.substring(0, 500))
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('[API /api/generate] HTTP error:', response.status, errorText.substring(0, 200))
+      console.error('[API /api/generate] HTTP error:', response.status, responseText.substring(0, 200))
 
-      const isHTML = errorText.trim().startsWith('<!DOCTYPE') || errorText.trim().startsWith('<!doctype')
+      const isHTML = responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<!doctype')
       const errorMessage = isHTML
         ? `Webhook error (${response.status}): Unable to reach n8n workflow. Please check webhook URL.`
-        : `HTTP ${response.status}: ${errorText.substring(0, 100)}`
+        : `HTTP ${response.status}: ${responseText.substring(0, 100)}`
 
       return NextResponse.json({
         success: false,
@@ -48,8 +52,16 @@ export async function POST(request: NextRequest) {
       }, { status: response.status })
     }
 
-    const responseData = await response.json()
-    console.log('[API /api/generate] Response data:', responseData)
+    // Parse JSON from text
+    let responseData
+    try {
+      responseData = JSON.parse(responseText)
+      console.log('[API /api/generate] Parsed response data:', responseData)
+    } catch (parseError) {
+      console.error('[API /api/generate] JSON parse error:', parseError)
+      console.error('[API /api/generate] Raw response:', responseText)
+      throw new Error(`Invalid JSON response from webhook: ${responseText.substring(0, 100)}`)
+    }
 
     return NextResponse.json({
       success: responseData.success,
