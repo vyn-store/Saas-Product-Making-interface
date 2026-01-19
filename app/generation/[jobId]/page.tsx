@@ -30,14 +30,9 @@ export default function GenerationPage() {
       const elapsed = Math.floor((Date.now() - startTime) / 1000)
       setElapsedTime(elapsed)
 
-      // Calculate progress based on estimated time
-      if (elapsed >= estimatedTime) {
-        setProgress(100)
-        clearInterval(interval)
-      } else {
-        const calculatedProgress = Math.min((elapsed / estimatedTime) * 100, 95)
-        setProgress(Math.round(calculatedProgress))
-      }
+      // Calculate progress based on estimated time, cap at 95% until results arrive
+      const calculatedProgress = Math.min((elapsed / estimatedTime) * 100, 95)
+      setProgress(Math.round(calculatedProgress))
     }, 1000)
 
     return () => clearInterval(interval)
@@ -74,8 +69,8 @@ export default function GenerationPage() {
     if (elapsedTime < 15) return 'Initializing AI systems...'
     if (elapsedTime < 45) return 'Analyzing product details...'
     if (elapsedTime < 120) return 'Generating AI image...'
-    if (elapsedTime < 280) return 'Creating AI video...'
-    return 'Finalizing your content...'
+    if (elapsedTime < 240) return 'Creating AI video...'
+    return 'Processing final results...'
   }
 
   return (
