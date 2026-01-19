@@ -48,7 +48,9 @@ export default function Home() {
     setError(null)
 
     try {
-      // N8N Webhook URL - direct call from browser
+      // N8N Webhook URL - Direct call to production webhook
+      // IMPORTANT: Make sure ONLY workflow LYyh2ovT6sJoxGiG is active with this path
+      // Deactivate workflow IpiUMIpqaO6GUZMJ if requests are going to wrong workflow
       const webhookUrl = 'https://kvktrades.app.n8n.cloud/webhook/product-media-generation'
 
       console.log('[GENERATE] Webhook URL:', webhookUrl)
