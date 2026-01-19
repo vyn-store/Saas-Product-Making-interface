@@ -48,8 +48,8 @@ export default function Home() {
     setError(null)
 
     try {
-      // N8N Webhook URL - Production webhook
-      const webhookUrl = 'https://kvktrades.app.n8n.cloud/webhook/product-media-generation'
+      // N8N Webhook URL - Production webhook with unique path
+      const webhookUrl = 'https://kvktrades.app.n8n.cloud/webhook/vyn-media-gen'
 
       console.log('[GENERATE] Webhook URL:', webhookUrl)
       console.log('[GENERATE] Preparing request payload...')
