@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>N8N Webhook Test</title>
+</head>
+<body>
+    <h1>N8N Webhook Direct Test</h1>
+    <button id="testBtn">Test Webhook Now</button>
+    <pre id="output"></pre>
+
+    <script>
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            const output = document.getElementById('output');
+            output.textContent = 'Testing...\n';
+
+            try {
+                const webhookUrl = 'https://kvktrades.app.n8n.cloud/webhook/product-media-generation';
+
+                const payload = {
+                    product: {
+                        id: 'browser-test-' + Date.now(),
+                        name: 'Browser Direct Test Product',
+                        description: 'Testing from HTML file',
+                        price: 29.99,
+                        originalPrice: 39.99,
+                        currency: 'USD',
+                        images: ['https://example.com/test.jpg'],
+                        mainImage: 'https://example.com/test.jpg',
+                        categoryId: 'test-cat',
+                        categoryName: 'Test Category',
+                        variants: [],
+                        shipFromCountries: ['US'],
+                        sourceUrl: 'https://test.com',
+                        fetchedAt: new Date().toISOString()
+                    }
+                };
+
+                output.textContent += 'Sending request to: ' + webhookUrl + '\n';
+                output.textContent += 'Payload: ' + JSON.stringify(payload, null, 2) + '\n\n';
+
+                const startTime = Date.now();
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                    mode: 'cors',
+                });
+
+                const endTime = Date.now();
+                output.textContent += 'Response received in ' + (endTime - startTime) + 'ms\n';
+                output.textContent += 'Status: ' + response.status + ' ' + response.statusText + '\n\n';
+
+                const responseText = await response.text();
+                output.textContent += 'Response:\n' + responseText + '\n\n';
+
+                if (response.ok) {
+                    const result = JSON.parse(responseText);
+                    output.textContent += '✓ SUCCESS!\n';
+                    output.textContent += 'Job ID: ' + result.jobId + '\n';
+                    output.textContent += 'Product: ' + result.productName + '\n';
+                } else {
+                    output.textContent += '✗ FAILED\n';
+                }
+            } catch (error) {
+                output.textContent += '\n✗ ERROR:\n' + error.message + '\n';
+                output.textContent += error.stack;
+            }
+        });
+    </script>
+</body>
+</html>
